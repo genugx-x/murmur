@@ -6,9 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,8 +41,9 @@ class PostControllerTest {
                         .content("{\"title\": \"\", \"content\":\"어쩌구저쩌구\"}")
                 )
                 .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.title").value("제목을 입력해주세요.")
+                        status().isBadRequest(),
+                        jsonPath("$.message").value("잘못된 요청입니다."),
+                        jsonPath("$.validation.title").value("제목을 입력해주세요.")
                 )
                 .andDo(print());
 
@@ -59,9 +58,11 @@ class PostControllerTest {
                         .content("{\"title\": \"궁시렁궁시렁...\", \"content\":\"\"}")
                 )
                 .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.content").value("내용을 입력해주세요.")
+                        status().isBadRequest(),
+                        jsonPath("$.message").value("잘못된 요청입니다."),
+                        jsonPath("$.validation.content").value("내용을 입력해주세요.")
                 )
                 .andDo(print());
     }
+
 }
