@@ -1,6 +1,7 @@
 package com.genug.murmur.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,7 +32,8 @@ class PostControllerTest {
     @Autowired
     private PostRepository postRepository;
 
-    @BeforeEach // 각각의 테스트 메서드가 수행되기 전에 수행됨.
+    @BeforeEach
+        // 각각의 테스트 메서드가 수행되기 전에 수행됨.
     void clean() {
         postRepository.deleteAll();
     }
@@ -97,7 +100,7 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("/posts 요청시 DB에 값이 저장된다.")
+    @DisplayName("/posts 요청시 DB에 1개의 글이 저장되고 그 갯수는 1개이다.")
     void test4() throws Exception {
         PostCreate request = PostCreate.builder()
                 .title("제목입니다.")
@@ -108,13 +111,31 @@ class PostControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(json)
                 )
-                .andExpectAll(
-                        status().isOk(),
-                        content().string("1")
-                )
+                .andExpect(status().isOk())
                 .andDo(print());
         // then
         assertEquals(1L, postRepository.count());
+    }
+
+    @Test
+    @DisplayName("글 1개 조회")
+    void test5() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("foo")
+                .content("bar")
+                .build();
+        postRepository.save(post);
+
+        // expected
+        mockMvc.perform(get("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.id").value(post.getId()),
+                        jsonPath("$.title").value("foo"),
+                        jsonPath("$.content").value("bar"))
+                .andDo(print());
     }
 
 }
