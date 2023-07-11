@@ -6,6 +6,7 @@ import com.genug.murmur.api.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,8 +29,8 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getList() {
-        return ResponseEntity.ok(postService.getList());
+    public ResponseEntity<?> getList(Pageable pageable) {
+        return ResponseEntity.ok(postService.getList(pageable));
     }
 
     @GetMapping("/{postId}")

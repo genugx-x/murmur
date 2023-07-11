@@ -12,6 +12,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -182,6 +185,31 @@ class PostControllerTest {
                         jsonPath("$[0].id").value(post.getId()),
                         jsonPath("$[1].title").value("1234567890"))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("페이지 0번쨰 조회 시 30~26번 글을 가져와야한다.")
+    void test8() throws Exception {
+        // given
+        List<Post> requestPosts = IntStream.rangeClosed(1, 30)
+                .mapToObj(i -> Post.builder()
+                        .title("title-" + i)
+                        .content("content-" + i)
+                        .build())
+                .toList();
+        postRepository.saveAll(requestPosts);
+
+        // expected
+        mockMvc.perform(get("/posts?page=1&sort=id,desc")
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.length()", is(5)),
+                        jsonPath("$[0].id").value(30),
+                        jsonPath("$[0].title").value("title-30"),
+                        jsonPath("$[0].content").value("content-30"))
+                .andDo(print());
+
     }
 
 }
