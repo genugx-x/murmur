@@ -1,18 +1,18 @@
 package com.genug.murmur.api.controller;
 
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.response.PostResponse;
 import com.genug.murmur.api.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/posts")
 public class PostController {
 
     private final PostService postService;
@@ -21,11 +21,16 @@ public class PostController {
     // GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, TRACE, CONNECT
 
     // 글 등록
-    @PostMapping("/posts")
+    @PostMapping
     public ResponseEntity<?> post(@RequestBody @Valid PostCreate request) {
         Long postId = postService.write(request);
         return ResponseEntity.ok(postId);
     }
 
+    @GetMapping("/{postId}")
+    public ResponseEntity<?> get(@PathVariable Long postId) {
+        PostResponse response = postService.get(postId);
+        return ResponseEntity.ok(response);
+    }
 
 }
