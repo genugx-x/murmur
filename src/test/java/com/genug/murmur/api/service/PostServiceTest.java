@@ -3,20 +3,18 @@ package com.genug.murmur.api.service;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @SpringBootTest
 public class PostServiceTest {
@@ -101,17 +99,19 @@ public class PostServiceTest {
                 .toList();
         postRepository.saveAll(requestPosts);
 
-        Pageable pageable = PageRequest.of(0, 5, DESC, "id");
-
+        // Pageable pageable = PageRequest.of(0, 5, DESC, "id");
+        PostSearch postSearch = PostSearch.builder()
+                .page(1)
+                .build();
         // when
-        List<PostResponse> response = postService.getList(pageable);
+        List<PostResponse> response = postService.getList(postSearch);
 
         // then
         assertNotNull(response);
         assertFalse(response.isEmpty());
         assertEquals(30, postRepository.count());
-        assertEquals(5, response.size());
+        assertEquals(10, response.size());
         assertEquals("title-30", response.get(0).getTitle());
-        assertEquals("title-26", response.get(4).getTitle());
+        assertEquals("title-21", response.get(9).getTitle());
     }
 }

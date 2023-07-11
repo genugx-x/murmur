@@ -3,10 +3,10 @@ package com.genug.murmur.api.service;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,9 +27,9 @@ public class PostService {
         return post.getId();
     }
 
-    public List<PostResponse> getList(Pageable pageable) {
+    public List<PostResponse> getList(PostSearch postSearch) {
 //        Pageable pageable = PageRequest.of(page, 5, Sort.by("id").descending());
-        return postRepository.findAll(pageable).stream()
+        return postRepository.getList(postSearch).stream()
 //                .map(post -> PostResponse.builder()
 //                        .id(post.getId())
 //                        .title(post.getTitle())

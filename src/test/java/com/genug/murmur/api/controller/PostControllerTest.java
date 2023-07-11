@@ -37,7 +37,6 @@ class PostControllerTest {
     private PostRepository postRepository;
 
     @BeforeEach
-        // 각각의 테스트 메서드가 수행되기 전에 수행됨.
     void clean() {
         postRepository.deleteAll();
     }
@@ -161,34 +160,33 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("글 전체 조회")
+    @DisplayName("1번 페이지 조회 시 마지막 데이터가 0번 인덱스의 데이터로 조회되어야한다.")
     void test7() throws Exception {
         // given
-        Post post = Post.builder()
-                .title("foo")
-                .content("bar")
-                .build();
-        postRepository.save(post);
-
-        Post post2 = Post.builder()
-                .title("123456789012345")
-                .content("bar")
-                .build();
-        postRepository.save(post2);
+        List<Post> requestPosts = IntStream.rangeClosed(1, 30)
+                .mapToObj(i -> Post.builder()
+                        .title("title-" + i)
+                        .content("content-" + i)
+                        .build())
+                .toList();
+        postRepository.saveAll(requestPosts);
 
         // expected
-        mockMvc.perform(get("/posts")
+        // mockMvc.perform(get("/posts?page=1&sort=id,desc")
+        mockMvc.perform(get("/posts?page=1&size=10")
                         .contentType(APPLICATION_JSON))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.length()", is(2)),
-                        jsonPath("$[0].id").value(post.getId()),
-                        jsonPath("$[1].title").value("1234567890"))
+                        jsonPath("$.length()", is(10)),
+                        jsonPath("$[0].id").value(requestPosts.get(requestPosts.size() - 1).getId()),
+                        jsonPath("$[0].title").value(requestPosts.get(requestPosts.size() - 1).getTitle()),
+                        jsonPath("$[0].content").value(requestPosts.get(requestPosts.size() - 1).getContent()))
                 .andDo(print());
+
     }
 
     @Test
-    @DisplayName("페이지 0번쨰 조회 시 30~26번 글을 가져와야한다.")
+    @DisplayName("0번 페이지 조회 시에도 1번 페이지로 조회 되어야 한다.")
     void test8() throws Exception {
         // given
         List<Post> requestPosts = IntStream.rangeClosed(1, 30)
@@ -200,14 +198,15 @@ class PostControllerTest {
         postRepository.saveAll(requestPosts);
 
         // expected
-        mockMvc.perform(get("/posts?page=1&sort=id,desc")
+        // mockMvc.perform(get("/posts?page=1&sort=id,desc")
+        mockMvc.perform(get("/posts?page=0&size=10")
                         .contentType(APPLICATION_JSON))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.length()", is(5)),
-                        jsonPath("$[0].id").value(30),
-                        jsonPath("$[0].title").value("title-30"),
-                        jsonPath("$[0].content").value("content-30"))
+                        jsonPath("$.length()", is(10)),
+                        jsonPath("$[0].id").value(requestPosts.get(requestPosts.size() - 1).getId()),
+                        jsonPath("$[0].title").value(requestPosts.get(requestPosts.size() - 1).getTitle()),
+                        jsonPath("$[0].content").value(requestPosts.get(requestPosts.size() - 1).getContent()))
                 .andDo(print());
 
     }
