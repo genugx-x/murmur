@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -135,6 +136,51 @@ class PostControllerTest {
                         jsonPath("$.id").value(post.getId()),
                         jsonPath("$.title").value("foo"),
                         jsonPath("$.content").value("bar"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("/posts 요청시 DB에 1개의 글이 저장되고 그 갯수는 1개이다.")
+    void test6() throws Exception {
+        PostCreate request = PostCreate.builder()
+                .title("제목입니다.")
+                .content("내용입니다.")
+                .build();
+        String json = objectMapper.writeValueAsString(request);
+        mockMvc.perform(post("/posts")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+        // then
+        assertEquals(1L, postRepository.count());
+    }
+
+    @Test
+    @DisplayName("글 전체 조회")
+    void test7() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("foo")
+                .content("bar")
+                .build();
+        postRepository.save(post);
+
+        Post post2 = Post.builder()
+                .title("123456789012345")
+                .content("bar")
+                .build();
+        postRepository.save(post2);
+
+        // expected
+        mockMvc.perform(get("/posts")
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.length()", is(2)),
+                        jsonPath("$[0].id").value(post.getId()),
+                        jsonPath("$[1].title").value("1234567890"))
                 .andDo(print());
     }
 
