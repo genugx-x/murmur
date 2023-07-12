@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.request.PostEdit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,7 @@ import java.util.stream.IntStream;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -42,24 +42,20 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("/posts 요청시 Hello World를 출력한다.")
+    @DisplayName("POST /posts 요청 시 request를 저장하고 반환값이 없다.")
     void test() throws Exception {
         PostCreate request = PostCreate.builder()
                 .title("제목입니다.")
                 .content("내용입니다.")
                 .build();
         String json = objectMapper.writeValueAsString(request);
-        // System.out.println(json);
 
         // expected - MockMvcRequestBuilders.get() .post()
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
                 )
-                .andExpectAll(
-                        status().isOk(),
-                        content().string("1")
-                )
+                .andExpect(status().isOk())
                 .andDo(print());
     }
 
@@ -207,6 +203,65 @@ class PostControllerTest {
                         jsonPath("$[0].id").value(requestPosts.get(requestPosts.size() - 1).getId()),
                         jsonPath("$[0].title").value(requestPosts.get(requestPosts.size() - 1).getTitle()),
                         jsonPath("$[0].content").value(requestPosts.get(requestPosts.size() - 1).getContent()))
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("글 제목 수정")
+    void test9() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("Edited title!")
+                .content("content")
+                .build();
+
+        //expected
+        mockMvc.perform(patch("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postEdit)))
+                .andExpectAll(
+                        status().isOk())
+                .andDo(print());
+        /*
+        mockMvc.perform(get("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.id").value(post.getId()),
+                        jsonPath("$.title").value("Edited title!"),
+                        jsonPath("$.content").value("content"))
+                .andDo(print());
+         */
+    }
+
+    @Test
+    @DisplayName("글 내용 수정")
+    void test10() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("title")
+                .content("Edited content!")
+                .build();
+
+        //expected
+        mockMvc.perform(patch("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postEdit)))
+                .andExpectAll(
+                        status().isOk())
                 .andDo(print());
 
     }

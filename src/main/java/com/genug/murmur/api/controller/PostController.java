@@ -1,6 +1,7 @@
 package com.genug.murmur.api.controller;
 
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.request.PostEdit;
 import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import com.genug.murmur.api.service.PostService;
@@ -39,4 +40,9 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{postId}")
+    public ResponseEntity<?> edit(@PathVariable Long postId, @RequestBody PostEdit request) {
+        postService.edit(postId, request);
+        return ResponseEntity.ok().build(); // ?
+    }
 }

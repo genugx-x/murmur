@@ -3,6 +3,7 @@ package com.genug.murmur.api.service;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.api.request.PostEdit;
 import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,5 +114,57 @@ public class PostServiceTest {
         assertEquals(10, response.size());
         assertEquals("title-30", response.get(0).getTitle());
         assertEquals("title-21", response.get(9).getTitle());
+    }
+
+    @Test
+    @DisplayName("글 제목 수정")
+    void test5() {
+        // given
+        Post post = Post.builder()
+                        .title("title")
+                        .content("content")
+                        .build();
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("Edited title!")
+                .content("content")
+                .build();
+
+        // when
+        postService.edit(post.getId(), postEdit);
+
+        // then
+        Post editedPost = postRepository.findById(post.getId())
+                .orElseThrow(() -> new RuntimeException("글이 존재하지 않습니다. id=" + post.getId()));
+        assertNotNull(editedPost);
+        assertEquals(postEdit.getTitle(), editedPost.getTitle());
+        assertEquals("content", editedPost.getContent());
+    }
+
+    @Test
+    @DisplayName("글 내용 수정")
+    void test6() {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("title")
+                .content("Edited content!")
+                .build();
+
+        // when
+        postService.edit(post.getId(), postEdit);
+
+        // then
+        Post editedPost = postRepository.findById(post.getId())
+                .orElseThrow(() -> new RuntimeException("글이 존재하지 않습니다. id=" + post.getId()));
+        assertNotNull(editedPost);
+        assertEquals("title", editedPost.getTitle());
+        assertEquals(postEdit.getContent(), editedPost.getContent());
     }
 }
