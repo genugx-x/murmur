@@ -54,7 +54,8 @@ public class PostService {
 
     @Transactional
     public void update(Long id, PostUpdate postEdit) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
         PostEditor.PostEditorBuilder editorBuilder = post.toEditor();
 //        if (postEdit.getTitle() != null) {
 //            editorBuilder.title(postEdit.getTitle());
@@ -67,5 +68,12 @@ public class PostService {
                 .title(postEdit.getTitle())
                 .content(postEdit.getContent())
                 .build());
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
+        postRepository.delete(post);
     }
 }

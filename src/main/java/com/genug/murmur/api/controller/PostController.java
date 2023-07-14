@@ -1,8 +1,8 @@
 package com.genug.murmur.api.controller;
 
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.request.PostSearch;
+import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.response.PostResponse;
 import com.genug.murmur.api.service.PostService;
 import jakarta.validation.Valid;
@@ -44,5 +44,11 @@ public class PostController {
     public ResponseEntity<?> update(@PathVariable Long postId, @RequestBody PostUpdate request) {
         postService.update(postId, request);
         return ResponseEntity.ok().build(); // ?
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<?> delete(@PathVariable Long postId) {
+        postService.delete(postId);
+        return ResponseEntity.ok().build();
     }
 }
