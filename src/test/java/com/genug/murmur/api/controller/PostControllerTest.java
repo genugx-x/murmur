@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostEdit;
+import com.genug.murmur.api.request.PostUpdate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -217,7 +217,7 @@ class PostControllerTest {
                 .build();
         postRepository.save(post);
 
-        PostEdit postEdit = PostEdit.builder()
+        PostUpdate postEdit = PostUpdate.builder()
                 .title("Edited title!")
                 .content("content")
                 .build();
@@ -251,7 +251,7 @@ class PostControllerTest {
                 .build();
         postRepository.save(post);
 
-        PostEdit postEdit = PostEdit.builder()
+        PostUpdate postEdit = PostUpdate.builder()
                 .title("title")
                 .content("Edited content!")
                 .build();
@@ -262,6 +262,41 @@ class PostControllerTest {
                         .content(objectMapper.writeValueAsString(postEdit)))
                 .andExpectAll(
                         status().isOk())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("수정 요청한 글 제목이 null 인 경우 기존의 제목으로 저장")
+    void test11() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        PostUpdate postEdit = PostUpdate.builder()
+                .title(null)
+                .content("Edited content!")
+                .build();
+
+        //expected
+        // 수정 요청
+        mockMvc.perform(patch("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postEdit)))
+                .andExpectAll(
+                        status().isOk())
+                .andDo(print());
+        // 수정 내용 확인
+        mockMvc.perform(get("/posts/{postId}", post.getId())
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.id").value(post.getId()),
+                        jsonPath("$.title").value("title"),
+                        jsonPath("$.content").value("Edited content!"))
                 .andDo(print());
 
     }

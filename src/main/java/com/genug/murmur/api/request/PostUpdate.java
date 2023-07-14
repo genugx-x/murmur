@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PostEdit {
+public class PostUpdate {
 
     // @NotBlank(message = "타이틀을 입력하세요.")
     @NotBlank(message = "{validation.post.title.notBlank}")
@@ -18,7 +18,7 @@ public class PostEdit {
     public String content;
 
     @Builder
-    public PostEdit(String title, String content) {
+    public PostUpdate(String title, String content) {
         this.title = title;
         this.content = content;
     }

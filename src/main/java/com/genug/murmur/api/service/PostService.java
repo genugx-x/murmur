@@ -4,7 +4,7 @@ import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.domain.PostEditor;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostEdit;
+import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class PostService {
     }
 
     @Transactional
-    public void edit(Long id, PostEdit postEdit) {
+    public void update(Long id, PostUpdate postEdit) {
         Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
         PostEditor.PostEditorBuilder editorBuilder = post.toEditor();
 //        if (postEdit.getTitle() != null) {

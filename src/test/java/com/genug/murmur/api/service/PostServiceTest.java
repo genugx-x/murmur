@@ -3,7 +3,7 @@ package com.genug.murmur.api.service;
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostEdit;
+import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.request.PostSearch;
 import com.genug.murmur.api.response.PostResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -126,13 +126,13 @@ public class PostServiceTest {
                         .build();
         postRepository.save(post);
 
-        PostEdit postEdit = PostEdit.builder()
+        PostUpdate postEdit = PostUpdate.builder()
                 .title("Edited title!")
                 .content("content")
                 .build();
 
         // when
-        postService.edit(post.getId(), postEdit);
+        postService.update(post.getId(), postEdit);
 
         // then
         Post editedPost = postRepository.findById(post.getId())
@@ -152,13 +152,13 @@ public class PostServiceTest {
                 .build();
         postRepository.save(post);
 
-        PostEdit postEdit = PostEdit.builder()
+        PostUpdate postEdit = PostUpdate.builder()
                 .title("title")
                 .content("Edited content!")
                 .build();
 
         // when
-        postService.edit(post.getId(), postEdit);
+        postService.update(post.getId(), postEdit);
 
         // then
         Post editedPost = postRepository.findById(post.getId())
@@ -167,4 +167,31 @@ public class PostServiceTest {
         assertEquals("title", editedPost.getTitle());
         assertEquals(postEdit.getContent(), editedPost.getContent());
     }
+
+    @Test
+    @DisplayName("수정 요청한 글 제목이 null 인 경우 기존의 제목으로 저장")
+    void test7() {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        PostUpdate postEdit = PostUpdate.builder()
+                .title(null)
+                .content("Edited content!")
+                .build();
+
+        // when
+        postService.update(post.getId(), postEdit);
+
+        // then
+        Post editedPost = postRepository.findById(post.getId())
+                .orElseThrow(() -> new RuntimeException("글이 존재하지 않습니다. id=" + post.getId()));
+        assertNotNull(editedPost);
+        assertEquals("title", editedPost.getTitle());
+        assertEquals(postEdit.getContent(), editedPost.getContent());
+    }
+
 }

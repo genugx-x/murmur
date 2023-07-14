@@ -14,4 +14,5 @@ public class PostEditor {
         this.title = title;
         this.content = content;
     }
+
 }
