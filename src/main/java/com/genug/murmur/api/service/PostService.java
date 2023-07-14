@@ -2,10 +2,11 @@ package com.genug.murmur.api.service;
 
 import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.domain.PostEditor;
+import com.genug.murmur.api.exception.PostNotFoundException;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.request.PostSearch;
+import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,7 @@ public class PostService {
 
     public PostResponse get(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
+                .orElseThrow(PostNotFoundException::new);
         return PostResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -55,7 +56,7 @@ public class PostService {
     @Transactional
     public void update(Long id, PostUpdate postEdit) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
+                .orElseThrow(PostNotFoundException::new);
         PostEditor.PostEditorBuilder editorBuilder = post.toEditor();
 //        if (postEdit.getTitle() != null) {
 //            editorBuilder.title(postEdit.getTitle());
@@ -73,7 +74,7 @@ public class PostService {
     @Transactional
     public void delete(Long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글 입니다."));
+                .orElseThrow(PostNotFoundException::new);
         postRepository.delete(post);
     }
 }

@@ -320,4 +320,59 @@ class PostControllerTest {
 
     }
 
+    @Test
+    @DisplayName("존재하지 않는 글 조회")
+    void test13() throws Exception {
+        Long postId = 999L;
+        //expected
+        mockMvc.perform(get("/posts/{postId}", postId)
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.code").value("404"),
+                        jsonPath("$.message").value("존재하지 않는 글입니다."),
+                        jsonPath("$.validation").isEmpty())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 글 수정 요청")
+    void test14() throws Exception {
+        Long postId = 999L;
+        PostUpdate postEdit = PostUpdate.builder()
+                .title("title")
+                .content("content")
+                .build();
+
+        //expected
+        mockMvc.perform(patch("/posts/{postId}", postId)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postEdit)))
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.code").value("404"),
+                        jsonPath("$.message").value("존재하지 않는 글입니다."),
+                        jsonPath("$.validation").isEmpty())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 글 삭제 요청")
+    void test15() throws Exception {
+        Long postId = 999L;
+
+        //expected
+        mockMvc.perform(delete("/posts/{postId}", postId)
+                        .contentType(APPLICATION_JSON))
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.code").value("404"),
+                        jsonPath("$.message").value("존재하지 않는 글입니다."),
+                        jsonPath("$.validation").isEmpty())
+                .andDo(print());
+
+    }
+
 }

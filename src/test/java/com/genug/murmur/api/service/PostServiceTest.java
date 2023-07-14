@@ -1,6 +1,7 @@
 package com.genug.murmur.api.service;
 
 import com.genug.murmur.api.domain.Post;
+import com.genug.murmur.api.exception.PostNotFoundException;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
 import com.genug.murmur.api.request.PostUpdate;
@@ -209,5 +210,60 @@ public class PostServiceTest {
         // then
         assertEquals(0, postRepository.count());
     }
+
+    @Test
+    @DisplayName("글 검색 시 존재하지 않는 글인 경우 PostNotFoundException 발생")
+    void test9() {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+        Long postId = post.getId() + 1L;
+
+        // expected
+        assertThrows(PostNotFoundException.class, () -> postService.get(postId));
+    }
+
+    @Test
+    @DisplayName("글 삭제 시 존재하지 않는 글인 경우 PostNotFoundException 발생")
+    void test10() {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+        Long postId = post.getId() + 1L;
+
+        // expected
+        assertThrows(PostNotFoundException.class,
+                () -> postService.delete(postId));
+    }
+
+    @Test
+    @DisplayName("글 수정 요청 시 존재하지 않는 글인 경우 PostNotFoundException 발생")
+    void test11() {
+        // given
+        Post post = Post.builder()
+                .title("title")
+                .content("content")
+                .build();
+        postRepository.save(post);
+
+        Long postId = post.getId() + 1L;
+        PostUpdate postEdit = PostUpdate.builder()
+                .title(null)
+                .content("Edited content!")
+                .build();
+
+        // expected
+        assertThrows(PostNotFoundException.class, () -> postService.update(postId, postEdit));
+    }
+
+
+
+
 
 }
