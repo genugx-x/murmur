@@ -1,12 +1,12 @@
 package com.genug.murmur.security;
 
+import com.genug.murmur.api.service.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,26 +24,37 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
+    private final AuthService authService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        log.info("[JwtAuthenticationFilter] filter is running... authentication={}", SecurityContextHolder.getContext().getAuthentication());
         try {
             String token = parseBearerToken(request);
-            if (token != null && !token.equalsIgnoreCase("null")) {
+            log.info("[JwtAuthenticationFilter] token={}", token);
+            // Blacklist token check
+            if (token != null && !token.equalsIgnoreCase("null") && !isBlackList(token)) {
                 Long userId = Long.parseLong(tokenProvider.validateAndGetSubject(token));
-                AbstractAuthenticationToken authenticationToken =
+                var authenticationToken =
                         new UsernamePasswordAuthenticationToken(userId, null, AuthorityUtils.NO_AUTHORITIES);
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(authenticationToken);
                 SecurityContextHolder.setContext(context);
             }
-        } catch(Exception e) {
-            log.info("{}", e.getMessage());
+        } catch (Exception e) {
+            log.error("{}", e.getMessage());
             throw e;
         }
         filterChain.doFilter(request, response);
     }
+
+    /*
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return request.getServletPath().equals("/login");
+    }
+     */
 
     private String parseBearerToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authentication");
@@ -51,5 +62,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    // 인자의 토큰이 redis 에 저장되어 있지 않거나, "logout" 값을 가지고 있다면 블랙리스트이다.
+    public boolean isBlackList(String token) {
+        String value = authService.getValue(token);
+        return value != null && value.equals("logout");
     }
 }

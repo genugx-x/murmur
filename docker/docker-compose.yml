@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest  # Redis 이미지 사용 (최신 버전)
+    container_name: redis  # 컨테이너의 이름 지정 (원하는 이름으로 변경 가능)
+    ports:
+      - "6379:6379"  # 호스트 포트와 컨테이너 포트 매핑 (외부:내부)
+    volumes:
+      - /Users/genug/Docker/redis/data:/data
+      - /Users/genug/Docker/redis/conf/redis.conf:/usr/local/conf/redis.conf
