@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserLogin {
+public class Login {
 
     @NotBlank(message = "이메일을 입력하세요.")
     private String email;
@@ -16,7 +16,7 @@ public class UserLogin {
     private String password;
 
     @Builder
-    public UserLogin(String email, String password) {
+    public Login(String email, String password) {
         this.email = email;
         this.password = password;
     }

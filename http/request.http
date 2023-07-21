@@ -1,0 +1,24 @@
+GET http://localhost:8080/auth/logout
+Authentication: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaXNzIjoiTXVybXVyIGFwcCIsImlhdCI6MTY4OTkyOTMwOSwiZXhwIjoxNjg5OTI5MzY5fQ.SIpPjtiP52-IPBkQLLf7nlTx6tx6QHufJI4xlplGChw
+
+###
+
+GET http://localhost:8080/posts/1
+Accept: application/json
+Authentication: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaXNzIjoiTXVybXVyIGFwcCIsImlhdCI6MTY4OTkyOTI1NiwiZXhwIjoxNjg5OTI5MzE2fQ.b3n4T-skTAEXOGphrRXLNFukKzbgoOY2BIpfJlwYqOw
+
+###
+
+
+POST http://localhost:8080/auth/login
+Content-Type: application/json;charset=UTF-8
+
+{"email":"genug@gmail.com","password":"12345"}
+
+###
+
+POST http://localhost:8080/auth/signup
+Content-Type: application/json;charset=UTF-8
+
+
+

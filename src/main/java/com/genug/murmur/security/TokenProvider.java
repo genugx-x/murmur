@@ -20,7 +20,7 @@ public class TokenProvider {
     }
 
     public String create(String subject) {
-        Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
+        Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.MINUTES));
         return Jwts.builder()
                 // header
                 .signWith(secretKey)
@@ -39,5 +39,13 @@ public class TokenProvider {
                 .parseClaimsJws(jws)
                 .getBody()
                 .getSubject();
+    }
+
+    public Date getRemainingExpirationDate(String jws) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(jws)
+                .getBody().getExpiration();
     }
 }

@@ -19,10 +19,6 @@ public class PostController {
 
     private final PostService postService;
 
-    // Http Method
-    // GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, TRACE, CONNECT
-
-    // 글 등록
     @PostMapping
     public ResponseEntity<?> post(@RequestBody @Valid PostCreate request) {
         Long postId = postService.write(request);
