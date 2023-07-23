@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class RedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
 

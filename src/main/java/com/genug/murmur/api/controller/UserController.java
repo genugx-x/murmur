@@ -3,7 +3,7 @@ package com.genug.murmur.api.controller;
 import com.genug.murmur.api.domain.User;
 import com.genug.murmur.api.request.Login;
 import com.genug.murmur.api.response.LoginResponse;
-import com.genug.murmur.api.service.AuthService;
+import com.genug.murmur.api.service.RedisService;
 import com.genug.murmur.api.service.UserService;
 import com.genug.murmur.security.TokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +23,7 @@ import java.util.Date;
 public class UserController {
 
     private final UserService userService;
-    private final AuthService authService;
+    private final RedisService redisService;
     private final TokenProvider tokenProvider;
 
     // 임시 회원가입
@@ -39,7 +39,7 @@ public class UserController {
         log.info("[UserController] login --- called");
         User user = userService.login(login.getEmail(), login.getPassword());
         String token = tokenProvider.create(String.valueOf(user.getId()));
-        authService.delete(token);
+        redisService.delete(token);
         return ResponseEntity.ok(LoginResponse.builder()
                 .userId(user.getId())
                 .token(token)
@@ -54,7 +54,7 @@ public class UserController {
             String token = bearerToken.substring(7);
             Date expd = tokenProvider.getRemainingExpirationDate(token);
             long current = System.currentTimeMillis();
-            authService.setValue(token, "logout", expd.getTime()-current);
+            redisService.setValue(token, "logout", expd.getTime()-current);
         }
     }
 }

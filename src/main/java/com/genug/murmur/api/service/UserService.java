@@ -20,7 +20,7 @@ public class UserService {
     public void signUp() {
         userRepository.save(User.builder()
                 .email("genug@gmail.com")
-                .password(passwordEncoder.encode("12345"))
+                .password(passwordEncoder.encode("qA^12345"))
                 .nickname("genugxx")
                 .build());
     }

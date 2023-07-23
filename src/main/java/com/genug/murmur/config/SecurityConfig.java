@@ -1,6 +1,6 @@
 package com.genug.murmur.config;
 
-import com.genug.murmur.api.service.AuthService;
+import com.genug.murmur.api.service.RedisService;
 import com.genug.murmur.security.JwtAuthenticationFilter;
 import com.genug.murmur.security.TokenProvider;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,7 +21,7 @@ import java.security.Key;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    public final AuthService authService;
+    public final RedisService redisService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,7 +37,7 @@ public class SecurityConfig {
                             .anyRequest().authenticated();
                 })
                 // filter 등록. 매 요청마다 CorsFilter 실행한 후에 jwtAuthenticationFilter 실행한다.
-                .addFilterAfter(new JwtAuthenticationFilter(tokenProvider(), authService), CorsFilter.class);
+                .addFilterAfter(new JwtAuthenticationFilter(tokenProvider(), redisService), CorsFilter.class);
         http.logout().logoutUrl("/logout");
         return http.build();
     }

@@ -30,7 +30,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        String encryptedPassword = passwordEncoder.encode("12345");
+        String encryptedPassword = passwordEncoder.encode("qA^12345");
         User user = User.builder()
                 .email("genug@gmail.com")
                 .password(encryptedPassword)
@@ -49,7 +49,7 @@ class UserServiceTest {
     void test() {
         // given
         String email = "genug@gmail.com";
-        String password = "12345";
+        String password = "qA^12345";
 
         // when
         User user = userService.login(email, password);
@@ -65,7 +65,7 @@ class UserServiceTest {
     void test2() {
         // given
         String email = "xxxx@gmail.com";
-        String password = "12345";
+        String password = "qA^12345";
 
         // expected
         UserNotFoundException e = assertThrows(UserNotFoundException.class,
