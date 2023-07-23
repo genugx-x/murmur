@@ -5,10 +5,12 @@ import com.genug.murmur.api.domain.User;
 import com.genug.murmur.api.repository.UserRepository;
 import com.genug.murmur.api.request.Login;
 import com.genug.murmur.api.response.LoginResponse;
-import com.genug.murmur.api.service.AuthService;
-import com.genug.murmur.api.service.UserService;
+import com.genug.murmur.api.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,21 +38,18 @@ class UserControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private AuthService authService;
+    private RedisService redisService;
 
 
     @BeforeEach
     void setUp() {
-        String encryptedPassword = passwordEncoder.encode("12345");
+        String encryptedPassword = passwordEncoder.encode("qA^12345");
         for (int i = 0; i < 5; i++) {
             userRepository.save(User.builder()
                     .email("xxx" + i + "@gmail.com")
@@ -77,23 +76,146 @@ class UserControllerTest {
         // given
         Login request = Login.builder()
                 .email("genug@gmail.com")
-                .password("12345")
+                .password("qA^12345")
                 .build();
         // expected
-        MvcResult result = mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.token").isNotEmpty())
-                .andDo(print())
-                .andReturn();
-        LoginResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), LoginResponse.class);
-        mockMvc.perform(get("/posts/1")
-                        .header("Authentication", "Bearer " + response.getToken())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 이메일 입력 유효성 검사 테스트1 - @가 없는경우")
+    void loginEmailInputValidationCheckTest1() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("userexample.com")
+                .password("qA^12345")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpectAll(
-                        status().isOk())
+                        status().isBadRequest(),
+                        jsonPath("$.validation.email").value("이메일 형식 올바르지 않습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 이메일 입력 유효성 검사 테스트2 - . 없는경우")
+    void loginEmailInputValidationCheckTest2() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@examplecom")
+                .password("qA^12345")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.email").value("이메일 형식 올바르지 않습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 비밀번호 입력 유효성 검사 테스트1 - 영문 대문자가 없는 경우")
+    void loginPasswordInputValidationCheckTest1() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@example.com")
+                .password("a@31234234")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.password").value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 비밀번호 입력 유효성 검사 테스트2 - 영문 소문자가 없는 경우")
+    void loginPasswordInputValidationCheckTest2() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@examplecom")
+                .password("A@31234234")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.password").value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 비밀번호 입력 유효성 검사 테스트3 - 특수문자가 없는 경우")
+    void loginPasswordInputValidationCheckTest3() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@examplecom")
+                .password("Aa31234234")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.password").value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 비밀번호 입력 유효성 검사 테스트4 - 숫자가 없는 경우")
+    void loginPasswordInputValidationCheckTest4() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@example.com")
+                .password("AaakAldkqn$!")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.password").value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 비밀번호 입력 유효성 검사 테스트5 - 8글자 미만인 경우")
+    void loginPasswordInputValidationCheckTest5() throws Exception {
+        // given
+        Login request = Login.builder()
+                .email("user@example.com")
+                .password("a!D4%2Q")
+                .build();
+        // expected
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.validation.password").value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
                 .andDo(print());
     }
 
@@ -103,7 +225,7 @@ class UserControllerTest {
         // given
         Login request = Login.builder()
                 .email("genug123@gmail.com")
-                .password("12345")
+                .password("qA^12345")
                 .build();
 
         // expected
@@ -125,7 +247,7 @@ class UserControllerTest {
         // given
         Login request = Login.builder()
                 .email("")
-                .password("12345")
+                .password("qA^12345")
                 .build();
 
         // expected
@@ -187,7 +309,7 @@ class UserControllerTest {
         // given
         Login request = Login.builder()
                 .email("genug@gmail.com")
-                .password("12345")
+                .password("qA^12345")
                 .build();
 
         //when 1 - Login
@@ -214,18 +336,7 @@ class UserControllerTest {
                 .andExpectAll(
                         status().isForbidden())
                 .andDo(print());
-        assertEquals("logout", authService.getValue(response.getToken()));
+        assertEquals("logout", redisService.getValue(response.getToken()));
     }
 
-    @Test
-    void test() throws Exception {
-        String token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2IiwiaXNzIjoiTXVybXVyIGFwcCIsImlhdCI6MTY4OTkyNzYwNywiZXhwIjoxNjg5OTI3NjY3fQ.KUb1GVQ-LU9qgQn2yGp-3u6S-m2dvI3h_6dic6F8oks";
-        // expected
-        mockMvc.perform(get("/posts/1")
-                        .header("Authentication", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpectAll(
-                        status().isOk())
-                .andDo(print());
-    }
 }

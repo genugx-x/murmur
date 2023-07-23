@@ -1,6 +1,6 @@
 package com.genug.murmur.security;
 
-import com.genug.murmur.api.service.AuthService;
+import com.genug.murmur.api.service.RedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +24,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
-    private final AuthService authService;
+    private final RedisService redisService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -66,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 인자의 토큰이 redis 에 저장되어 있지 않거나, "logout" 값을 가지고 있다면 블랙리스트이다.
     public boolean isBlackList(String token) {
-        String value = authService.getValue(token);
+        String value = redisService.getValue(token);
         return value != null && value.equals("logout");
     }
 }
