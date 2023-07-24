@@ -46,7 +46,6 @@ class UserControllerTest {
     @Autowired
     private RedisService redisService;
 
-
     @BeforeEach
     void setUp() {
         String encryptedPassword = passwordEncoder.encode("qA^12345");

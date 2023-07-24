@@ -5,11 +5,9 @@ import com.genug.murmur.api.exception.LoginFailException;
 import com.genug.murmur.api.exception.UserNotFoundException;
 import com.genug.murmur.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
