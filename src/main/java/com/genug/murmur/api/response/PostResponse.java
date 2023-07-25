@@ -15,14 +15,14 @@ public class PostResponse {
 
     public PostResponse(Post post) {
         this.id = post.getId();
-        this.title = post.getTitle().substring(0, Math.min(post.getTitle().length(), 10));
+        this.title = post.getTitle();
         this.content = post.getContent();
     }
 
     @Builder
     public PostResponse(Long id, String title, String content) {
         this.id = id;
-        this.title = title.substring(0, Math.min(title.length(), 10));
+        this.title = title;
         this.content = content;
     }
 }

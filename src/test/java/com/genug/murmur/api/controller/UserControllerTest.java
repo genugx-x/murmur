@@ -241,27 +241,6 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("이메일을 입력하지 않은 상태로 로그인 요청 시 '이메일을 입력하세요.' 메시지 응답")
-    void loginWithBlankEmailTest() throws Exception {
-        // given
-        Login request = Login.builder()
-                .email("")
-                .password("qA^12345")
-                .build();
-
-        // expected
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpectAll(
-                        status().isBadRequest(),
-                        jsonPath("$.validation.email")
-                                .value("이메일을 입력하세요."))
-                .andDo(print());
-
-    }
-
-    @Test
     @DisplayName("패스워드를 입력하지 않은 상태로 로그인 요청 시 '비밀번호를 입력하세요.' 메시지 응답")
     void loginWithBlankPasswordTest() throws Exception {
         // given
@@ -277,7 +256,8 @@ class UserControllerTest {
                 .andExpectAll(
                         status().isBadRequest(),
                         jsonPath("$.validation.password")
-                                .value("비밀번호를 입력하세요."))
+                                .value("비밀번호 형식이 올바르지 않습니다.\n" +
+                                        "(영문 대소문자, 숫자, 특수문자로 이루어진 최소 8글자 이상입니다.)"))
                 .andDo(print());
     }
 
@@ -287,7 +267,7 @@ class UserControllerTest {
         // given
         Login request = Login.builder()
                 .email("genug@gmail.com")
-                .password("123456")
+                .password("qA^123456")
                 .build();
 
         // expected

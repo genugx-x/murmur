@@ -4,10 +4,10 @@ import com.genug.murmur.api.domain.Post;
 import com.genug.murmur.api.exception.PostNotFoundException;
 import com.genug.murmur.api.repository.PostRepository;
 import com.genug.murmur.api.request.PostCreate;
-import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.request.PostSearch;
+import com.genug.murmur.api.request.PostUpdate;
 import com.genug.murmur.api.response.PostResponse;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +27,8 @@ public class PostServiceTest {
     @Autowired
     private PostRepository postRepository;
 
-    @BeforeEach
-    void clean() {
+    @AfterEach
+    void cleanUp() {
         postRepository.deleteAll();
     }
 
@@ -68,25 +68,6 @@ public class PostServiceTest {
         assertNotNull(response);
         assertEquals(1, postRepository.count());
         assertEquals("title", response.getTitle());
-    }
-
-    @Test
-    @DisplayName("글 1개 조회 및 조회된 글은 제목 최대 10글자만 가져와야한다.")
-    void test3() {
-        // given
-        Post requestNewPost = Post.builder()
-                .title("123456789012345")
-                .content("content")
-                .build();
-        postRepository.save(requestNewPost);
-
-        // when
-        PostResponse response = postService.get(requestNewPost.getId());
-
-        // then
-        assertNotNull(response);
-        assertEquals(1, postRepository.count());
-        assertEquals("1234567890", response.getTitle());
     }
 
     @Test

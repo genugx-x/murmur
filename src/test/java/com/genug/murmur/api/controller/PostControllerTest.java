@@ -2,15 +2,20 @@ package com.genug.murmur.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.genug.murmur.api.domain.Post;
+import com.genug.murmur.api.domain.User;
 import com.genug.murmur.api.repository.PostRepository;
+import com.genug.murmur.api.repository.UserRepository;
 import com.genug.murmur.api.request.PostCreate;
 import com.genug.murmur.api.request.PostUpdate;
+import com.genug.murmur.security.TokenProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -27,23 +32,50 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class PostControllerTest {
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
-    @Autowired // @AutoConfigureMockMvc를 테스트클래스에 추가해줘야함
+    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private TokenProvider tokenProvider;
+
+    private String token;
+
     @BeforeEach
-    void clean() {
+    void setUp() {
+        String encryptedPassword = passwordEncoder.encode("qA^12345");
+        User user = User.builder()
+                .email("genug@gmail.com")
+                .password(encryptedPassword)
+                .nickname("genugxx")
+                .build();
+        userRepository.save(user);
+        token = tokenProvider.create(String.valueOf(user.getId()));
+    }
+
+    @AfterEach
+    void cleanUp() {
+        token = null;
+        userRepository.deleteAll();
         postRepository.deleteAll();
     }
 
     @Test
     @DisplayName("POST /posts 요청 시 request를 저장하고 반환값이 없다.")
     void test() throws Exception {
+        // given
         PostCreate request = PostCreate.builder()
                 .title("제목입니다.")
                 .content("내용입니다.")
@@ -54,7 +86,7 @@ class PostControllerTest {
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
-                )
+                        .header("Authentication", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print());
     }
@@ -62,13 +94,17 @@ class PostControllerTest {
     @Test
     @DisplayName("/posts 요청시 title 입력은 필수다. ")
     void test2() throws Exception {
+        // given
         PostCreate request = PostCreate.builder()
                 .content("내용입니다.")
                 .build();
         String json = objectMapper.writeValueAsString(request);
+
+        // expected
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
+                        .header("Authentication", "Bearer " + token)
                 )
                 .andExpectAll(
                         status().isBadRequest(),
@@ -82,14 +118,17 @@ class PostControllerTest {
     @Test
     @DisplayName("/posts 요청시 content 입력은 필수다. ")
     void test3() throws Exception {
+        // given
         PostCreate request = PostCreate.builder()
                 .title("제목입니다.")
                 .build();
         String json = objectMapper.writeValueAsString(request);
+
+        // expected
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
-                )
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isBadRequest(),
                         jsonPath("$.message").value("잘못된 요청입니다."),
@@ -101,14 +140,18 @@ class PostControllerTest {
     @Test
     @DisplayName("/posts 요청시 DB에 1개의 글이 저장되고 그 갯수는 1개이다.")
     void test4() throws Exception {
+        // given
         PostCreate request = PostCreate.builder()
                 .title("제목입니다.")
                 .content("내용입니다.")
                 .build();
         String json = objectMapper.writeValueAsString(request);
+
+        // expected
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
+                        .header("Authentication", "Bearer " + token)
                 )
                 .andExpect(status().isOk())
                 .andDo(print());
@@ -128,7 +171,8 @@ class PostControllerTest {
 
         // expected
         mockMvc.perform(get("/posts/{postId}", post.getId())
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.id").value(post.getId()),
@@ -148,7 +192,7 @@ class PostControllerTest {
         mockMvc.perform(post("/posts")
                         .contentType(APPLICATION_JSON)
                         .content(json)
-                )
+                        .header("Authentication", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print());
         // then
@@ -168,9 +212,9 @@ class PostControllerTest {
         postRepository.saveAll(requestPosts);
 
         // expected
-        // mockMvc.perform(get("/posts?page=1&sort=id,desc")
         mockMvc.perform(get("/posts?page=1&size=10")
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.length()", is(10)),
@@ -196,7 +240,8 @@ class PostControllerTest {
         // expected
         // mockMvc.perform(get("/posts?page=1&sort=id,desc")
         mockMvc.perform(get("/posts?page=0&size=10")
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.length()", is(10)),
@@ -225,7 +270,8 @@ class PostControllerTest {
         //expected
         mockMvc.perform(patch("/posts/{postId}", post.getId())
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postEdit)))
+                        .content(objectMapper.writeValueAsString(postEdit))
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk())
                 .andDo(print());
@@ -259,7 +305,8 @@ class PostControllerTest {
         //expected
         mockMvc.perform(patch("/posts/{postId}", post.getId())
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postEdit)))
+                        .content(objectMapper.writeValueAsString(postEdit))
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk())
                 .andDo(print());
@@ -285,13 +332,15 @@ class PostControllerTest {
         // 수정 요청
         mockMvc.perform(patch("/posts/{postId}", post.getId())
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postEdit)))
+                        .content(objectMapper.writeValueAsString(postEdit))
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk())
                 .andDo(print());
         // 수정 내용 확인
         mockMvc.perform(get("/posts/{postId}", post.getId())
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.id").value(post.getId()),
@@ -313,7 +362,8 @@ class PostControllerTest {
 
         //expected
         mockMvc.perform(delete("/posts/{postId}", post.getId())
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isOk())
                 .andDo(print());
@@ -326,6 +376,7 @@ class PostControllerTest {
         Long postId = 999L;
         //expected
         mockMvc.perform(get("/posts/{postId}", postId)
+                        .header("Authentication", "Bearer " + token)
                         .contentType(APPLICATION_JSON))
                 .andExpectAll(
                         status().isNotFound(),
@@ -348,7 +399,8 @@ class PostControllerTest {
         //expected
         mockMvc.perform(patch("/posts/{postId}", postId)
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postEdit)))
+                        .content(objectMapper.writeValueAsString(postEdit))
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isNotFound(),
                         jsonPath("$.code").value("404"),
@@ -365,7 +417,8 @@ class PostControllerTest {
 
         //expected
         mockMvc.perform(delete("/posts/{postId}", postId)
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpectAll(
                         status().isNotFound(),
                         jsonPath("$.code").value("404"),

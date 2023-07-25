@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -17,8 +18,16 @@ public class LogTraceAspect {
 
     private final LogTrace logTrace;
 
-    // api 패키지 하위의 모든 경로의 클래스와 메서드
-    @Around("execution(* com.genug.murmur.api..*(..))") // pointcut
+    @Pointcut("execution(* com.genug.murmur.api.service..*(..))")
+    public void service(){}
+
+    @Pointcut("execution(* com.genug.murmur.api.controller..*(..))")
+    public void controller(){}
+
+//    @Pointcut("execution(* com.genug.murmur.security.JwtAuthenticationFilter.*(..))")
+//    public void jwtAuthenticationFilter(){}
+
+    @Around("service() || controller()") // pointcut
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         // advice
         LogTraceStatus status = null;

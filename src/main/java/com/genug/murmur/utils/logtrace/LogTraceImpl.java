@@ -7,14 +7,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class LogTraceImpl implements LogTrace {
 
-    private ThreadLocal<TraceId> traceIdHolder = new ThreadLocal<>();
+    private final static String BEGIN_PREFIX = "-->";
+    private final static String END_COMPLETE_PREFIX = "<--";
+    private final static String EXCEPTION_COMPLETE_PREFIX = "<x-";
+    private final ThreadLocal<TraceId> traceIdHolder = new ThreadLocal<>();
 
     @Override
     public LogTraceStatus begin(String message) {
         syncTraceId();
         TraceId traceId = traceIdHolder.get();
         long startTimeMillis = System.currentTimeMillis();
-        log.info("[{}] {}{}", traceId.getId(), addSpace(traceId.getLevel(), "-->"), message);
+        log.info("[{}] {}{}", traceId.getId(), addSpace(traceId.getLevel(), BEGIN_PREFIX), message);
         return LogTraceStatus.builder()
                 .traceId(traceId)
                 .message(message)
@@ -24,17 +27,22 @@ public class LogTraceImpl implements LogTrace {
 
     @Override
     public void end(LogTraceStatus status) {
-        TraceId traceId = traceIdHolder.get();
-        long elapsedTimeMillis = System.currentTimeMillis() - status.getStartTimeMillis();
-        log.info("[{}] {}{} [{}ms]", status.getTraceId().getId(), addSpace(traceId.getLevel(), "<--"), status.getMessage(), elapsedTimeMillis);
-        releaseTraceId();
+        complete(status, null);
     }
 
     @Override
     public void exception(LogTraceStatus status, Exception e) {
-        TraceId traceId = traceIdHolder.get();
+        complete(status, e);
+    }
+
+    private void complete(LogTraceStatus status, Exception e) {
         long elapsedTimeMillis = System.currentTimeMillis() - status.getStartTimeMillis();
-        log.info("[{}] {}{} time={}ms ex={}", status.getTraceId().getId(), addSpace(traceId.getLevel(), "<x-"), status.getMessage(), elapsedTimeMillis, e.toString());
+        TraceId traceId = traceIdHolder.get();
+        if (e == null) {
+            log.info("[{}] {}{} time={}ms", traceId.getId(), addSpace(traceId.getLevel(), END_COMPLETE_PREFIX), status.getMessage(), elapsedTimeMillis);
+        } else {
+            log.error("[{}] {}{} time={}ms ex={}", traceId.getId(), addSpace(traceId.getLevel(), EXCEPTION_COMPLETE_PREFIX), status.getMessage(), elapsedTimeMillis, e.toString());
+        }
         releaseTraceId();
     }
 
@@ -57,12 +65,8 @@ public class LogTraceImpl implements LogTrace {
     }
 
     private String addSpace(int level, String prefix) {
-        StringBuilder sb = new StringBuilder();
         String step = "|   ";
-        sb.append(step.repeat(Math.max(0, level)))
-                .append("|")
-                .append(prefix);
-        return sb.toString();
+        return step.repeat(Math.max(0, level)) + "|" + prefix;
     }
 
 

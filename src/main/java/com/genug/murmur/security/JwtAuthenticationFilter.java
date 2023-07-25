@@ -28,10 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        log.info("[JwtAuthenticationFilter] filter is running... authentication={}", SecurityContextHolder.getContext().getAuthentication());
         try {
             String token = parseBearerToken(request);
-            log.info("[JwtAuthenticationFilter] token={}", token);
             // Blacklist token check
             if (token != null && !token.equalsIgnoreCase("null") && !isBlackList(token)) {
                 Long userId = Long.parseLong(tokenProvider.validateAndGetSubject(token));
@@ -43,8 +41,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.setContext(context);
             }
         } catch (Exception e) {
-            log.error("{}", e.getMessage());
-            throw e;
+            log.error("JwtAuthenticationFilter.doFilterInternal(..) ex={}", e.toString());
+
         }
         filterChain.doFilter(request, response);
     }
@@ -67,6 +65,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 인자의 토큰이 redis 에 저장되어 있지 않거나, "logout" 값을 가지고 있다면 블랙리스트이다.
     public boolean isBlackList(String token) {
         String value = redisService.getValue(token);
-        return value != null && value.equals("logout");
+        boolean result = value != null && value.equals("logout");
+        if (result) {
+            throw new RuntimeException("잘못된 접근입니다. 로그인 페이지로 이동합니다.");
+        }
+        return false;
     }
 }
