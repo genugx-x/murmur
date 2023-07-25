@@ -2,8 +2,13 @@ package com.genug.murmur.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.genug.murmur.api.domain.Post;
+import com.genug.murmur.api.domain.User;
 import com.genug.murmur.api.repository.PostRepository;
+import com.genug.murmur.api.repository.UserRepository;
 import com.genug.murmur.api.request.PostCreate;
+import com.genug.murmur.security.TokenProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.request.RequestDocumentation;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
@@ -36,21 +42,54 @@ public class PostControllerDocTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private PostRepository repository;
+    private PostRepository postRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TokenProvider tokenProvider;
+
+    private String token;
+
+    @BeforeEach
+    void setUp() {
+        String encryptedPassword = passwordEncoder.encode("qA^12345");
+        User user = User.builder()
+                .email("genug@gmail.com")
+                .password(encryptedPassword)
+                .nickname("genugxx")
+                .build();
+        userRepository.save(user);
+        token = tokenProvider.create(String.valueOf(user.getId()));
+    }
+
+    @AfterEach
+    void cleanUp() {
+        token = null;
+        userRepository.deleteAll();
+        postRepository.deleteAll();
+    }
+
     @Test
     @DisplayName("게시글 1건 조회")
     void test1() throws Exception {
-        repository.save(Post.builder()
+        // given
+        postRepository.save(Post.builder()
                 .title("제목입니다.")
                 .content("내용입니다.")
                 .build());
+
         // expected
         mockMvc.perform(get("/posts/{postId}", 1L)
-                        .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Authentication", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andDo(document("post-inquiry",
@@ -70,16 +109,18 @@ public class PostControllerDocTest {
     @Test
     @DisplayName("게시글 등록")
     void test2() throws Exception {
-        //given
+        // given
         PostCreate postCreate = PostCreate.builder()
-                .title("새글입니다.")
-                .content("새글의 내용입니다.")
+                .title("제목입니다.")
+                .content("내용입니다.")
                 .build();
+
         // expected
         mockMvc.perform(post("/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postCreate)))
+                        .content(objectMapper.writeValueAsString(postCreate))
+                        .header("Authentication", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andDo(document("post-create",

@@ -9,14 +9,12 @@ import com.genug.murmur.security.TokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -29,14 +27,12 @@ public class UserController {
     // 임시 회원가입
     @PostMapping("/signup")
     public ResponseEntity<?> signUp() {
-        log.info("[UserController] signup --- called");
         userService.signUp();
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid Login login) {
-        log.info("[UserController] login --- called");
         User user = userService.login(login.getEmail(), login.getPassword());
         String token = tokenProvider.create(String.valueOf(user.getId()));
         redisService.delete(token);
@@ -48,7 +44,6 @@ public class UserController {
 
     @GetMapping("/logout")
     public void logout(HttpServletRequest request) {
-        log.info("[UserController] logout --- called");
         String bearerToken = request.getHeader("Authentication");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7);
